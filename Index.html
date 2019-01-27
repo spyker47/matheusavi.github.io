@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Locavaga</title>
+
+        <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap.min.css"
+              asp-fallback-href="lib/bootstrap/dist/css/bootstrap.min.css"
+              asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute" />
+        <link rel="stylesheet" href="css/site.min.css" asp-append-version="true" />
+    <link rel='stylesheet' type='text/css' href='lib/maps/map.css' />
+    <script src='lib/maps/tomtom.min.js'></script>
+    <style>
+        .map {
+            height: 100%;
+            width: 100%;
+            top: 0;
+            left: 0;
+            position: absolute;
+        }
+
+        .pesquisa {
+            z-index: 20000;
+            position: absolute;
+            left: 5%;
+            right: 5%;
+            top: 5%;
+            width: 90%;
+        }
+
+        #pesquisa {
+            width: 85%;
+        }
+
+        .custom .leaflet-popup-tip,
+        .custom .leaflet-popup-content-wrapper {
+            /*background: #e93434;*/
+            /*color: #ffffff;*/
+            /*width: 90%;*/
+        }
+
+        .imagem {
+            width: 117px;
+            height: 75px;
+        }
+
+        .botao-cadastrar {
+            margin-top: 5px;
+        }
+
+        .descricao-estacionamento{
+            background-color:white;
+        }
+    </style>
+</head>
+<body class="body">
+    <div class="pesquisa input-group">
+        <input id="pesquisa" type="text" class="form-control" placeholder="Pesquise eventos e cidades">
+        <div class="input-group-append">
+            <button id="btn-pesquisa" class="btn btn-outline-secondary" type="button">🔎</button>
+        </div>
+    </div>
+
+    <div id="map" class="map"></div>
+
+        <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-3.3.1.min.js"
+                asp-fallback-src="lib/jquery/dist/jquery.min.js"
+                asp-fallback-test="window.jQuery"
+                crossorigin="anonymous"
+                integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT">
+        </script>
+        <script src="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"
+                asp-fallback-src="lib/bootstrap/dist/js/bootstrap.min.js"
+                asp-fallback-test="window.jQuery && window.jQuery.fn && window.jQuery.fn.modal"
+                crossorigin="anonymous"
+                integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa">
+        </script>
+        <script src="js/site.min.js" asp-append-version="true"></script>
+
+    <script>
+        var map = tomtom.L.map('map', {
+            key: 'nBSx8yLXQ1iNGgMHAA50yvw3M6LtEGaw',
+            zoomControl: false,
+            center: [-27.100608226594872, -48.917151689529426],
+            zoom: 9
+        });
+
+        var pins = [];
+
+        function adicionarPin(long, lat, texto, imagem, icon) {
+            texto = (texto) ? texto : '';
+
+            var customPopup = texto + "<br/>" +
+                (imagem ? ("<img class='imagem' src='" + imagem + "' " +
+                    "alt='maptime logo gif'/>") : '') +
+                "<button onclick='aproximaEvento()' class='botao-cadastrar btn btn-success'>Reservar vaga</button>";
+
+            // specify popup options
+            var customOptions =
+                {
+                    'maxWidth': '90%',
+                    'className': 'custom'
+                }
+
+            var pin = null;
+            if (icon) {
+                pin = tomtom.L.marker([long, lat], { icon: icon }).addTo(map).bindPopup(customPopup, customOptions);
+            } else {
+                pin = tomtom.L.marker([long, lat]).addTo(map).bindPopup(customPopup, customOptions);
+            }
+
+            pins.push(pin);
+        }
+
+        function pesquisar(pesquisa) {
+            $.ajax({
+                url: 'https://api.tomtom.com/search/2/search/' + pesquisa +
+                    '.json?countrySet=BR&lat=-27.0964628&lon=-48.9136323&idxSet=Geo&view=Unified&key=nBSx8yLXQ1iNGgMHAA50yvw3M6LtEGaw',
+                success: function (data) {
+                    if (data && data.results && data.results.length > 1) {
+                        map.fitBounds(
+                            [
+                                [data.results[1].boundingBox.topLeftPoint.lat, data.results[1].boundingBox.topLeftPoint.lon],
+                                [data.results[1].boundingBox.btmRightPoint.lat, data.results[1].boundingBox.btmRightPoint.lon]
+                            ]);
+
+                        criarEventosBrusque();
+                    }
+                },
+                type: 'GET',
+                dataType: 'json',
+            });
+        }
+
+        $('#btn-pesquisa').on('click', function () {
+            pesquisar($('#pesquisa').val());
+        });
+
+        function criarEventosBrusque() {
+            adicionarPin(-27.096763, -48.905839, 'Fenarreco\n09/10/2019', "https://2.bp.blogspot.com/-yo5JxKDZTGw/V_myjBJnTVI/AAAAAAAA2w0/XCYXh17fWJQGP06FojEyvCPHE_J7AzeTwCLcB/s1600/Fenarreco.jpg");
+            adicionarPin(-27.095912, -48.905774, 'Fenajeep', "https://2.bp.blogspot.com/-yo5JxKDZTGw/V_myjBJnTVI/AAAAAAAA2w0/XCYXh17fWJQGP06FojEyvCPHE_J7AzeTwCLcB/s1600/Fenarreco.jpg");
+            adicionarPin(-27.101685, -48.926604, 'Show do Dazaranha', "https://2.bp.blogspot.com/-yo5JxKDZTGw/V_myjBJnTVI/AAAAAAAA2w0/XCYXh17fWJQGP06FojEyvCPHE_J7AzeTwCLcB/s1600/Fenarreco.jpg");
+            adicionarPin(-27.093537, -48.909580, 'Palestra marcos piangers', "https://2.bp.blogspot.com/-yo5JxKDZTGw/V_myjBJnTVI/AAAAAAAA2w0/XCYXh17fWJQGP06FojEyvCPHE_J7AzeTwCLcB/s1600/Fenarreco.jpg");
+        }
+
+
+        function clearPins() {
+            for (var i = 0; i < pins.length; i++) {
+                map.removeLayer(pins[i]);
+            }
+            pins = [];
+        }
+
+        function aproximaEvento() {
+            map.fitBounds(
+                [
+                    [-27.083876898326974, -48.899106417720766],
+                    [-27.108328174024226, -48.91455594164655]
+                ]);
+            clearPins();
+
+            adicionarPin(-27.096501, -48.906784, 'R$: 30,00');
+            adicionarPin(-27.095756, -48.903758, 'R$: 45,00');
+            adicionarPin(-27.097876, -48.904713, 'R$: 45,00');
+        }
+    </script>
+</body>
+</html>
